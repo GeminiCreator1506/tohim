@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Sir Ji • Infinite Devotion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,500;14..32,700;14..32,800&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-deep: #0a0a14;
+      --purple-shadow: #1a0b2e;
+      --mid-purple: #3c1e6e;
+      --vibrant-pink: #d43f8d;
+      --soft-glow: #ff6bb0;
+      --dark-pink: #a12362;
+      --text-light: #f3eef7;
+      --text-dim: #c9b3e0;
+      --border-neon: rgba(212, 63, 141, 0.5);
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* custom cursor */
+    .cursor {
+      width: 10px;
+      height: 10px;
+      background: var(--vibrant-pink);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 10000;
+      filter: blur(1px);
+      transition: width 0.2s, height 0.2s;
+    }
+    .cursor-trail {
+      width: 40px;
+      height: 40px;
+      border: 1.5px solid rgba(212, 63, 141, 0.5);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s;
+    }
+
+    /* canvas particles */
+    #particleField {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* lenis smooth scroll setup */
+    html.lenis {
+      height: auto;
+    }
+    .lenis.lenis-smooth {
+      scroll-behavior: auto;
+    }
+
+    /* header minimal */
+    header {
+      position: fixed;
+      top: 24px;
+      left: 5%;
+      right: 5%;
+      width: 90%;
+      background: rgba(10, 10, 20, 0.65);
+      backdrop-filter: blur(16px);
+      border-radius: 60px;
+      padding: 0.8rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      border: 1px solid var(--border-neon);
+      box-shadow: 0 0 18px rgba(60, 30, 110, 0.5);
+    }
+    .nav-links a {
+      color: var(--text-dim);
+      margin-left: 2rem;
+      text-decoration: none;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      transition: 0.25s;
+    }
+    .nav-links a:hover {
+      color: var(--vibrant-pink);
+      text-shadow: 0 0 8px var(--vibrant-pink);
+    }
+    .logo {
+      font-weight: 800;
+      background: linear-gradient(130deg, var(--vibrant-pink), #b07eff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    /* hero section */
+    .hero {
+      height: 100vh;
+      width: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-content {
+      z-index: 15;
+    }
+    .hero-pre {
+      font-size: 0.85rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--soft-glow);
+    }
+    #dynamicTitle {
+      font-size: clamp(4rem, 14vw, 11rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff99cc, #d43f8d, #9b4dff);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: titleFlow 4s ease infinite;
+    }
+    @keyframes titleFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .hero-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-style: italic;
+      margin-top: 0.5rem;
+      color: var(--text-dim);
+    }
+    .scroll-indicator {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.6;
+    }
+    .mouse-wheel {
+      width: 26px;
+      height: 42px;
+      border: 2px solid var(--vibrant-pink);
+      border-radius: 20px;
+      position: relative;
+    }
+    .mouse-wheel::after {
+      content: '';
+      width: 4px;
+      height: 8px;
+      background: var(--vibrant-pink);
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 2px;
+      animation: wheelAnim 2s infinite;
+    }
+    @keyframes wheelAnim {
+      0% { opacity: 1; transform: translateX(-50%) translateY(0);}
+      80% { opacity: 0; transform: translateX(-50%) translateY(12px);}
+      100% { opacity: 0; transform: translateX(-50%) translateY(0);}
+    }
+
+    /* section 2: letter narrative */
+    .letter-section {
+      background: radial-gradient(ellipse at 20% 30%, #120b1f, #05020a);
+      padding: 7rem 6%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+      border-top: 2px solid rgba(212,63,141,0.4);
+    }
+    .letter-content {
+      flex: 1.3;
+    }
+    .visual-cloud {
+      flex: 0.9;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .section-tag {
+      font-size: 0.7rem;
+      letter-spacing: 5px;
+      color: var(--vibrant-pink);
+      margin-bottom: 1rem;
+    }
+    .letter-block {
+      background: rgba(26, 11, 46, 0.5);
+      backdrop-filter: blur(8px);
+      border-left: 4px solid var(--vibrant-pink);
+      padding: 1.8rem;
+      margin: 1.8rem 0;
+      border-radius: 24px;
+      transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+    .letter-block p {
+      font-size: 1.1rem;
+      line-height: 1.65;
+      font-weight: 400;
+      color: #e2d4f0;
+    }
+    .highlight {
+      color: var(--soft-glow);
+      font-weight: 600;
+      font-style: italic;
+    }
+    .floating-text-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .mood-word {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, #e67aa9, #a145b0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatWord 2.2s infinite alternate;
+    }
+    @keyframes floatWord {
+      0% { transform: translateY(0px); opacity: 0.7;}
+      100% { transform: translateY(-12px); opacity: 1;}
+    }
+
+    /* section 3: animated cards (NO hover only, but entrance + parallax + rotating) */
+    .memories-section {
+      padding: 6rem 5%;
+      background: #07040c;
+      overflow: hidden;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 2rem;
+      background: linear-gradient(120deg, #d43f8d, #ae5eff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .card-scroll-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2.5rem;
+      perspective: 800px;
+    }
+    .emotion-card {
+      background: linear-gradient(135deg, #1f112f, #140a22);
+      width: 320px;
+      padding: 2rem 1.8rem;
+      border-radius: 32px;
+      border: 1px solid rgba(212, 63, 141, 0.4);
+      transition: transform 0.5s ease, box-shadow 0.3s;
+      will-change: transform;
+      cursor: pointer;
+    }
+    .emotion-card i {
+      font-size: 2.4rem;
+      color: var(--vibrant-pink);
+      margin-bottom: 1rem;
+    }
+    .emotion-card p {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* section 4: grand finale with infinite rotation + orbit animations */
+    .finale {
+      min-height: 100vh;
+      background: radial-gradient(circle at center, #1c0a2b, #020005);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+    }
+    .finale h2 {
+      font-size: clamp(2.8rem, 9vw, 6rem);
+      font-weight: 800;
+    }
+    .signature-line {
+      margin: 2rem 0;
+      width: 200px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--vibrant-pink), var(--mid-purple), transparent);
+    }
+    .orbiting-hearts {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 2rem auto;
+    }
+    .orbit {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      animation: orbitSpin 12s linear infinite;
+    }
+    .orbit i {
+      position: absolute;
+      font-size: 1.8rem;
+      color: var(--vibrant-pink);
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes orbitSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* extra animations: gradient border flowing */
+    .flow-border {
+      width: 70%;
+      height: 2px;
+      background: linear-gradient(90deg, #d43f8d, #9b4dff, #d43f8d);
+      background-size: 200% auto;
+      animation: borderFlow 3s linear infinite;
+      margin: 1rem auto;
+    }
+    @keyframes borderFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* additional dynamic micro animations */
+    .pulse-glow {
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0% { text-shadow: 0 0 0px rgba(212,63,141,0);}
+      100% { text-shadow: 0 0 20px rgba(212,63,141,0.8);}
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor"></div>
+<div class="cursor-trail"></div>
+<canvas id="particleField"></canvas>
+
+<header>
+  <div class="logo">✦ SIR JI • ETERNAL ✦</div>
+  <div class="nav-links">
+    <a href="#heroId">HOMECOMING</a>
+    <a href="#letterPortrait">UNVEILING</a>
+    <a href="#infiniteCards">RESONANCE</a>
+    <a href="#closingAct">INFINITY</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="heroId" class="hero">
+  <div class="hero-content">
+    <div class="hero-pre">a letter carved in stardust</div>
+    <h1 id="dynamicTitle">SIR JI</h1>
+    <p class="hero-sub">the gravity that rewired my universe</p>
+  </div>
+  <div class="scroll-indicator">
+    <div class="mouse-wheel"></div>
+    <span style="font-size: 12px; letter-spacing: 2px;">DESCEND</span>
+  </div>
+</section>
+
+<!-- LETTER SECTION : deeper narrative -->
+<section id="letterPortrait" class="letter-section">
+  <div class="letter-content">
+    <div class="section-tag">✦ 01 / ALTERATION ✦</div>
+    <div class="letter-block" data-scroll data-speed="0.9">
+      <p>I never believed in the architecture of falling — until you. <span class="highlight">You dismantled every wall I built</span>, every excuse of indifference. One month, and my entire emotional spectrum recalibrated.</p>
+    </div>
+    <div class="letter-block" data-scroll>
+      <p>Long distance feels like an absurd paradox: I’ve never touched your hand, yet your voice is the <span class="highlight">anchor of my every restless night</span>. You turned silence into comfort, distance into poetry.</p>
+    </div>
+    <div class="letter-block" data-scroll>
+      <p>I used to mock vulnerability. But now? I find myself <span class="highlight">writing paragraphs about the way you exist</span> — patient, fierce, unexpectedly gentle. You are my exception, etched into every rule I ever made.</p>
+    </div>
+    <div class="letter-block" data-scroll>
+      <p>You listen to my rants, my midnight spirals, my absurd theories — and you stay. <span class="highlight">That act of staying is louder than any promise</span>. I appreciate every fragment of your attention, every ounce of effort.</p>
+    </div>
+  </div>
+  <div class="visual-cloud">
+    <div class="floating-text-cluster">
+      <span class="mood-word">EXCEPTION</span>
+      <span class="mood-word">SANCTUARY</span>
+      <span class="mood-word">MYTHIC</span>
+      <span class="mood-word">REAL</span>
+    </div>
+    <div style="margin-top: 2rem; font-size: 6rem; opacity: 0.2;"><i class="fas fa-infinity"></i></div>
+  </div>
+</section>
+
+<!-- CARD SECTION : NO HOVER but animated entrance + continuous micro-rotation & motion -->
+<section id="infiniteCards" class="memories-section">
+  <h2 class="section-title">the architecture of feeling</h2>
+  <div class="card-scroll-container" id="cardContainer">
+    <div class="emotion-card" data-card>
+      <i class="fas fa-phone-slash"></i> <i class="fas fa-heart"></i>
+      <p>From avoiding calls to craving your frequency — you rewired my neural pathways. I fell into the cadence of your voice without warning.</p>
+    </div>
+    <div class="emotion-card" data-card>
+      <i class="fas fa-globe"></i>
+      <p>Distance is a cruel geometry, but you made it beautiful. You’re still the best part of my daily algorithm, even from miles away.</p>
+    </div>
+    <div class="emotion-card" data-card>
+      <i class="fas fa-crown"></i>
+      <p>You pretend to be untouchable, but I see the softness underneath. And yes, you will always be my princess — no sigma facade can hide that.</p>
+    </div>
+    <div class="emotion-card" data-card>
+      <i class="fas fa-ear-listen"></i>
+      <p>Your patience deserves a monument. You absorb my chaos without flinching. Certificate for 'highest emotional bandwidth' — signed and sealed.</p>
+    </div>
+    <div class="emotion-card" data-card>
+      <i class="fas fa-star-of-life"></i>
+      <p>You saw the guarded, fragmented version of me and decided to stay. That choice ripples through me every single day. Everything.</p>
+    </div>
+    <div class="emotion-card" data-card>
+      <i class="fas fa-hand-sparkles"></i>
+      <p>The little things — the way you remember, the way you choose me without hesitation — that’s the real devotion. I notice. I cherish.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL PAGE : CINEMATIC CLOSING -->
+<section id="closingAct" class="finale">
+  <div class="section-tag" style="margin-bottom: 1rem;">✦ 04 / PERPETUITY ✦</div>
+  <h2 style="font-weight: 800;">I LOVE YOU</h2>
+  <h2 style="color: #d43f8d; margin-top: -0.2rem;">SIR JI</h2>
+  <div class="flow-border"></div>
+  <div style="max-width: 700px; font-size: 1.2rem; line-height: 1.8; margin: 2rem 0; font-family: 'Cormorant Garamond', serif;">
+    <p>Your presence in my life exceeds vocabulary. The way you stay, the way you hold space for my storms — it's a rare constellation, and I protect it fiercely.</p>
+    <p style="margin-top: 1rem;">I act strong, detached, but the truth is — you matter more than I ever articulate. This is me, finally saying it without filters.</p>
+  </div>
+  <div class="orbiting-hearts">
+    <div class="orbit"><i class="fas fa-heart"></i></div>
+    <div class="orbit" style="animation-duration: 9s; animation-direction: reverse;"><i class="fas fa-heart" style="color: #ff6bb0;"></i></div>
+    <div class="orbit" style="animation-duration: 14s;"><i class="fas fa-heart" style="color: #ae5eff;"></i></div>
+  </div>
+  <div class="flow-border"></div>
+  <p style="font-size: 1.8rem; font-weight: 700; margin-top: 1rem;">MINE, HAINA?</p>
+  <p style="margin-top: 2rem; letter-spacing: 1px;">— DIKSHITA</p>
+  <div class="flow-border" style="width: 40%;"></div>
+  <p style="font-size: 0.8rem; margin-top: 2rem; opacity: 0.6;">every raw feeling, every vulnerable syllable — belongs to you</p>
+</section>
+
+<!-- GSAP + Lenis + Enhanced animation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.3.8/dist/lenis.min.js"></script>
+
+<script>
+  // LENIS smooth scroll
+  const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+  function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+  requestAnimationFrame(raf);
+
+  // Cursor + trail dynamic
+  const cursor = document.querySelector('.cursor');
+  const trail = document.querySelector('.cursor-trail');
+  document.addEventListener('mousemove', (e) => {
+    gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.02 });
+    gsap.to(trail, { x: e.clientX, y: e.clientY, duration: 0.12, ease: "power2.out" });
+    // create occasional particle spark
+    if (Math.random() < 0.08) createMicroSpark(e.clientX, e.clientY);
+  });
+
+  function createMicroSpark(x, y) {
+    const spark = document.createElement('div');
+    spark.style.position = 'fixed';
+    spark.style.width = '3px';
+    spark.style.height = '3px';
+    spark.style.background = '#d43f8d';
+    spark.style.borderRadius = '50%';
+    spark.style.left = x + 'px';
+    spark.style.top = y + 'px';
+    spark.style.pointerEvents = 'none';
+    spark.style.zIndex = '9999';
+    spark.style.filter = 'blur(1px)';
+    document.body.appendChild(spark);
+    gsap.to(spark, { opacity: 0, scale: 2.5, duration: 0.6, onComplete: () => spark.remove() });
+  }
+
+  // particle canvas (dense stardust)
+  const canvas = document.getElementById('particleField');
+  const ctx = canvas.getContext('2d');
+  let w = window.innerWidth, h = window.innerHeight;
+  canvas.width = w; canvas.height = h;
+  let particles = [];
+  const PARTICLE_COUNT = 240;
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      radius: Math.random() * 2.2 + 0.6,
+      alpha: Math.random() * 0.5 + 0.2,
+      vx: (Math.random() - 0.5) * 0.2,
+      vy: (Math.random() - 0.5) * 0.2 + 0.1
+    });
+  }
+  function drawParticles() {
+    ctx.clearRect(0, 0, w, h);
+    for (let p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = w;
+      if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h;
+      if (p.y > h) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(212, 63, 141, ${p.alpha * 0.7})`;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(p.x - 0.8, p.y - 0.8, p.radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(155, 77, 255, 0.5)`;
+      ctx.fill();
+    }
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+  window.addEventListener('resize', () => {
+    w = window.innerWidth; h = window.innerHeight;
+    canvas.width = w; canvas.height = h;
+  });
+
+  // GSAP + ScrollTrigger animations (ultra dynamic)
+  gsap.registerPlugin(ScrollTrigger);
+  
+  // Hero title infinite pulse + extra morph
+  gsap.to("#dynamicTitle", { textShadow: "0 0 12px #d43f8d, 0 0 25px #9b4dff", duration: 1.4, repeat: -1, yoyo: true });
+  
+  // letter blocks stagger entrance
+  gsap.utils.toArray('.letter-block').forEach((block, idx) => {
+    gsap.from(block, { opacity: 0, x: -40, duration: 1, scrollTrigger: { trigger: block, start: "top 85%", toggleActions: "play none none reset" }, delay: idx * 0.1 });
+  });
+  
+  // floating words infinite bounce
+  gsap.utils.toArray('.mood-word').forEach(word => {
+    gsap.to(word, { y: -12, duration: 1.6, repeat: -1, yoyo: true, ease: "sine.inOut" });
+  });
+  
+  // emotion cards entrance with rotation and 3D tilt (NO hover, but continuous gentle sway)
+  const cards = gsap.utils.toArray('.emotion-card');
+  cards.forEach((card, i) => {
+    gsap.from(card, { opacity: 0, scale: 0.7, rotationY: 30, duration: 1.2, scrollTrigger: { trigger: card, start: "top 85%", toggleActions: "play none none reverse" } });
+    // infinite subtle floating rotation for each card
+    gsap.to(card, { rotationY: 6, rotationX: 4, duration: 3, repeat: -1, yoyo: true, ease: "sine.inOut", transformOrigin: "center center" });
+    // also slight color pulse
+    gsap.to(card, { borderColor: "rgba(212,63,141,0.9)", boxShadow: "0 0 18px rgba(212,63,141,0.3)", duration: 2.2, repeat: -1, yoyo: true });
+  });
+  
+  // Additional micro animation on scroll: dynamic parallax for visual cloud
+  gsap.to('.visual-cloud', { y: 40, scrollTrigger: { trigger: '.letter-section', start: "top bottom", end: "bottom top", scrub: 1.5 } });
+  
+  // orbiting hearts animation spin infinite
+  gsap.to('.orbit', { rotation: 360, duration: 20, repeat: -1, ease: "none" });
+  gsap.to('.orbit:first-child', { rotation: -360, duration: 15, repeat: -1, ease: "none" });
+  
+  // finale elements entrance + glimmer
+  gsap.from('.finale h2', { opacity: 0, y: 80, stagger: 0.2, scrollTrigger: { trigger: '#closingAct', start: "top 80%" } });
+  
+  // add click-triggered heart explosion (without emojis overload, using icons)
+  document.body.addEventListener('click', (e) => {
+    for (let i = 0; i < 14; i++) {
+      const iconHeart = document.createElement('i');
+      iconHeart.className = 'fas fa-heart';
+      iconHeart.style.position = 'fixed';
+      iconHeart.style.left = e.clientX + (Math.random() - 0.5) * 50 + 'px';
+      iconHeart.style.top = e.clientY + (Math.random() - 0.5) * 50 + 'px';
+      iconHeart.style.color = `hsl(${300 + Math.random() * 40}, 70%, 65%)`;
+      iconHeart.style.fontSize = (12 + Math.random() * 18) + 'px';
+      iconHeart.style.pointerEvents = 'none';
+      iconHeart.style.zIndex = '10000';
+      iconHeart.style.opacity = '0.8';
+      document.body.appendChild(iconHeart);
+      gsap.to(iconHeart, { y: -100 + Math.random() * -80, x: (Math.random() - 0.5) * 100, opacity: 0, scale: 1.6, duration: 1.2, onComplete: () => iconHeart.remove() });
+    }
+    // also scale cursor trail
+    gsap.to(trail, { scale: 1.9, duration: 0.2, yoyo: true, repeat: 1 });
+  });
+  
+  // auto-generate floating particles occasionally (ambient)
+  setInterval(() => {
+    if (Math.random() > 0.6) {
+      const randX = Math.random() * window.innerWidth;
+      const randY = window.innerHeight + 10;
+      createMicroSpark(randX, randY);
+    }
+  }, 900);
+  
+  // extra parallax on card container
+  ScrollTrigger.create({
+    trigger: ".memories-section",
+    start: "top bottom",
+    end: "bottom top",
+    onUpdate: (self) => {
+      gsap.to(".card-scroll-container", { rotationY: self.progress * 6, rotationX: self.progress * 3, ease: "none", duration: 0.1 });
+    }
+  });
+  
+  // final smooth floating effect on signature text
+  gsap.to(".signature-line", { width: "280px", duration: 2, repeat: -1, yoyo: true, ease: "power1.inOut" });
+</script>
+</body>
+</html>
